@@ -1,0 +1,27 @@
+EMPEZAR ACÁ
+
+1. Abrí Claude Desktop y andá a la pestaña "Code".
+2. Elegí esta carpeta (mi-panel-finanzas) como carpeta de trabajo.
+3. Copiá y pegá el texto de abajo (Prompt 1).
+4. Cuando Claude Code te muestre el plan, leelo y respondé "OK" si te parece bien.
+
+Los prompts de la Fase 2 y la Fase 3 están en SPEC.md, sección "Prompts para Claude Code".
+
+------------------------- PROMPT 1 (copiar desde acá) -------------------------
+
+Leé SPEC.md completo. Es la especificación de mi panel de finanzas personales: uso personal, Argentina, pesos y dólares, costo cero.
+
+No soy programador. Explicame cada paso en criollo y avisame antes de instalar cualquier cosa.
+
+1. Antes de escribir código, mostrame un plan corto de la Fase 1 y esperá mi OK.
+2. Creá un CLAUDE.md con: objetivo del proyecto, stack, comandos (dev, build, test), estructura de carpetas, modelo de datos y reglas de negocio de SPEC.md. Mantenelo actualizado.
+3. Usá el stack de la sección "Stack técnico gratuito". Nada pago: sin cuentas, sin API keys, sin servicios en la nube y sin llamadas a IA desde la app.
+4. Guardá los datos solo en el navegador (IndexedDB con Dexie). Exportar e importar backup JSON desde el primer día.
+5. Montos como enteros en centavos. Cada movimiento guarda la cotización usada. Respetá las 8 reglas de negocio.
+6. Cotización: usá https://dolarapi.com/v1/dolares, guardá una por día en la tabla cotizaciones y, si falla, usá la última guardada o pedime el valor.
+7. Interfaz en español rioplatense, montos "$ 12.345,67" y "US$ 1.234", fechas dd/mm/aaaa, pensada primero para el celu, con modo oscuro.
+8. Escribí tests con Vitest para conversiones ARS/USD, totales del mes, tasa de ahorro y saldos de cuentas.
+9. Inicializá git y hacé un commit por cada función terminada.
+10. Construí SOLO la Fase 1. Al terminar, cargá datos de ejemplo de un mes, explicame cómo abrir la app en mi compu y cómo borrar esos datos de ejemplo.
+
+------------------------- (hasta acá) -------------------------

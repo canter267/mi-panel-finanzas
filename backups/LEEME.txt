@@ -1,0 +1,7 @@
+Carpeta de backups
+
+Guardá acá los archivos de backup (.json) que exportás desde la app a fin de cada mes.
+- Sirven para pasar tus datos a otro dispositivo (celu o compu).
+- En la Fase 3, el comando /resumen-mes de Claude Code lee el backup más reciente de esta carpeta.
+
+No borres los viejos: son tu historial.

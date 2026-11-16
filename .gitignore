@@ -1,0 +1,9 @@
+node_modules
+dist
+*.local
+.claude/launch.json
+.claude/settings.local.json
+
+# Los backups tienen tus datos reales: no se suben al repositorio
+backups/*.json
+backups/*.csv
