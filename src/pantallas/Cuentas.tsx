@@ -5,6 +5,7 @@ import { db } from '../db/db'
 import type { Categoria, Cuenta, Grupo, Moneda, TipoCategoria, TipoCuenta } from '../db/tipos'
 import { saldoDeCuenta } from '../lib/calculos'
 import { centavosATexto, formatearMonto, parsearMonto } from '../lib/dinero'
+import { hoyISO } from '../lib/fechas'
 
 const TIPOS_CUENTA: Record<TipoCuenta, string> = {
   efectivo: 'Efectivo',
@@ -77,7 +78,7 @@ export default function Cuentas() {
           {[...cuentas]
             .sort((a, b) => Number(a.archivada) - Number(b.archivada))
             .map((c) => {
-              const saldo = saldoDeCuenta(c, movimientos)
+              const saldo = saldoDeCuenta(c, movimientos, hoyISO())
               return (
                 <li key={c.id}>
                   <button

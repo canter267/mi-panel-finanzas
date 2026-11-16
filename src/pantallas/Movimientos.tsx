@@ -4,6 +4,7 @@ import { FormMovimiento } from '../componentes/FormMovimiento'
 import type { Movimiento } from '../db/tipos'
 import { formatearMonto } from '../lib/dinero'
 import { fechaConDia, hoyISO, mesDe, nombreMes } from '../lib/fechas'
+import { esCuota } from '../lib/plan'
 
 const sinAcentos = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
@@ -34,10 +35,15 @@ export default function Movimientos() {
       }
     }
     const ingreso = m.tipo === 'ingreso'
+    const extra = [
+      esCuota(m) && `cuota ${m.cuota_n}/${m.cuotas_total}`,
+      m.recurrente_id != null && 'gasto fijo',
+      m.fecha > hoyISO() && 'a futuro',
+    ].filter(Boolean)
     return {
       icono: cat?.icono ?? '❓',
       titulo: cat?.nombre ?? 'Sin categoría',
-      detalle: nombreCuenta(m.cuenta_id),
+      detalle: [nombreCuenta(m.cuenta_id), ...extra].join(' · '),
       monto: (ingreso ? '+' : '-') + formatearMonto(m.monto_centavos, m.moneda),
       color: ingreso ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100',
     }
