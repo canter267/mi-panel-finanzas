@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
-import { useCategorias, useCuentas, useMovimientos } from '../componentes/datos'
+import { Link } from 'react-router-dom'
+import { Barra, TEXTO_NIVEL } from '../componentes/Barra'
+import { useCategorias, useCuentas, useMovimientos, usePresupuestos } from '../componentes/datos'
+import { estadoPresupuestos } from '../lib/plan'
 import type { Moneda } from '../db/tipos'
 import {
   gastosPorCategoria,
@@ -20,6 +23,7 @@ export default function Panel() {
   const cuentas = useCuentas()
   const categorias = useCategorias()
   const movimientos = useMovimientos()
+  const presupuestos = usePresupuestos()
   const [mes, setMes] = useState(mesDe(hoyISO()))
   const [moneda, setMoneda] = useState<Moneda>('ARS')
 
@@ -34,8 +38,9 @@ export default function Panel() {
   const tasaPrevia = tasaDeAhorro(previo.ingresos[clave], previo.gastos[clave])
   const porCategoria = gastosPorCategoria(movimientos, mes)
   const porGrupo = gastosPorGrupo(movimientos, mes, categorias)
-  const ahorradoUsd = saldoTotal(cuentas, movimientos, 'USD')
-  const enPesos = saldoTotal(cuentas, movimientos, 'ARS')
+  const ahorradoUsd = saldoTotal(cuentas, movimientos, 'USD', hoyISO())
+  const enPesos = saldoTotal(cuentas, movimientos, 'ARS', hoyISO())
+  const enAlerta = estadoPresupuestos(presupuestos, movimientos, mes).filter((e) => e.nivel !== 'ok')
   const nombreMesPrevio = nombreMes(mesAnterior(mes)).split(' ')[0].toLowerCase()
 
   const datosTorta = porCategoria.map((g) => {
@@ -121,6 +126,34 @@ export default function Panel() {
           <p className="font-semibold tabular-nums">{formatearMonto(enPesos, 'ARS')}</p>
         </div>
       </div>
+
+      {enAlerta.length > 0 && (
+        <Link to="/plan" className="tarjeta block">
+          <h3 className="mb-2 font-bold">Presupuestos en alerta</h3>
+          <ul className="space-y-2.5">
+            {enAlerta.map((e) => {
+              const c = categorias.find((x) => x.id === e.presupuesto.categoria_id)
+              const { tope_centavos: tope, moneda: m } = e.presupuesto
+              return (
+                <li key={e.presupuesto.categoria_id}>
+                  <div className="flex items-baseline justify-between gap-2 text-sm">
+                    <span>
+                      {c?.icono} {c?.nombre ?? 'Categoría borrada'}
+                    </span>
+                    <span className="tabular-nums">
+                      <span className={`font-semibold ${TEXTO_NIVEL[e.nivel]}`}>{formatearMonto(e.gastado, m)}</span>
+                      <span className="text-slate-500"> de {formatearMonto(tope, m)}</span>
+                    </span>
+                  </div>
+                  <div className="mt-1">
+                    <Barra parte={e.gastado / tope} nivel={e.nivel} />
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </Link>
+      )}
 
       {!hayDatos ? (
         <div className="tarjeta text-center text-slate-500">
