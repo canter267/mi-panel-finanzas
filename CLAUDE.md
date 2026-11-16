@@ -65,6 +65,9 @@ Siete tablas en IndexedDB (base `mi-panel-finanzas`). Las tres últimas existen 
 | alcancias | id, nombre, meta_usd_centavos, fecha_objetivo, cuenta_id | Fase 2 |
 | recurrentes | id, plantilla, frecuencia, dia_del_mes, activo | Fase 2 |
 
+Cuentas predefinidas: Efectivo, Banco, Mercado Pago, PedidosYa (bono mensual que da la empresa; billetera en pesos) y Dólares.
+El esquema va por la versión 2 de Dexie: la v2 solo agrega la cuenta PedidosYa a las bases ya creadas.
+
 Convenciones de implementación:
 
 - `fecha` es un string `AAAA-MM-DD` (fecha local, sin hora). `creado` / `editado` son ISO con hora.

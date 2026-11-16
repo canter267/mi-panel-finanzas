@@ -21,6 +21,13 @@ export class BaseFinanzas extends Dexie {
       alcancias: '++id',
       recurrentes: '++id',
     })
+    // v2: suma la cuenta PedidosYa (bono mensual de la empresa) a las bases que ya existían.
+    this.version(2).upgrade(async (tx) => {
+      const cuentas = tx.table<Cuenta>('cuentas')
+      const yaEsta = await cuentas.filter((c) => c.nombre.toLowerCase().replace(/\s/g, '') === 'pedidosya').count()
+      // orden 3.5: queda después de Mercado Pago y antes de Dólares.
+      if (!yaEsta) await cuentas.add({ ...CUENTA_PEDIDOSYA, orden: 3.5 })
+    })
     // Solo corre la primera vez que se crea la base en este navegador.
     this.on('populate', (tx) => {
       tx.table('cuentas').bulkAdd(CUENTAS_INICIALES)
@@ -29,11 +36,15 @@ export class BaseFinanzas extends Dexie {
   }
 }
 
+/** Saldo del bono mensual que la empresa acredita en PedidosYa. Va última para no mover los ids de las demás. */
+const CUENTA_PEDIDOSYA: Cuenta = { nombre: 'PedidosYa', tipo: 'billetera', moneda: 'ARS', saldo_inicial: 0, orden: 4, archivada: false }
+
 export const CUENTAS_INICIALES: Cuenta[] = [
   { nombre: 'Efectivo', tipo: 'efectivo', moneda: 'ARS', saldo_inicial: 0, orden: 1, archivada: false },
   { nombre: 'Banco', tipo: 'banco', moneda: 'ARS', saldo_inicial: 0, orden: 2, archivada: false },
   { nombre: 'Mercado Pago', tipo: 'billetera', moneda: 'ARS', saldo_inicial: 0, orden: 3, archivada: false },
-  { nombre: 'Dólares', tipo: 'dolares', moneda: 'USD', saldo_inicial: 0, orden: 4, archivada: false },
+  { nombre: 'Dólares', tipo: 'dolares', moneda: 'USD', saldo_inicial: 0, orden: 5, archivada: false },
+  CUENTA_PEDIDOSYA,
 ]
 
 const gasto = (nombre: string, grupo: Categoria['grupo'], icono: string, color: string): Categoria => ({

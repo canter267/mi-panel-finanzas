@@ -21,6 +21,7 @@ beforeEach(async () => {
 describe('base de datos', () => {
   it('arranca con las cuentas y categorías predefinidas', async () => {
     expect((await db.cuentas.toArray()).map((c) => c.nombre)).toEqual(CUENTAS_INICIALES.map((c) => c.nombre))
+    expect((await db.cuentas.orderBy('orden').toArray()).map((c) => c.nombre)).toEqual(['Efectivo', 'Banco', 'Mercado Pago', 'PedidosYa', 'Dólares'])
     expect(await db.categorias.count()).toBe(CATEGORIAS_INICIALES.length)
     expect(await db.categorias.where('tipo').equals('ingreso').count()).toBe(2)
   })
@@ -37,7 +38,7 @@ describe('backup JSON', () => {
     expect(await db.movimientos.count()).toBe(0)
 
     await restaurarBackup(backup)
-    expect(await db.cuentas.count()).toBe(4)
+    expect(await db.cuentas.count()).toBe(5)
     expect(await db.movimientos.count()).toBe(3)
     expect(saldoDeCuenta((await db.cuentas.get(2))!, await db.movimientos.toArray())).toBe(saldoAntes)
     expect((await crearBackup()).tablas).toEqual(backup.tablas)
@@ -52,7 +53,7 @@ describe('backup JSON', () => {
 
   it('el resumen para la vista previa cuenta y da el rango de fechas', async () => {
     expect(resumirBackup(await crearBackup())).toMatchObject({
-      cuentas: 4,
+      cuentas: 5,
       categorias: 14,
       movimientos: 3,
       desde: '2026-11-01',
