@@ -93,6 +93,9 @@ Decisiones tomadas en la Fase 1 (la spec no las define):
 - Sin ingresos en el mes, la tasa de ahorro no se calcula (se muestra "—").
 - 50/30/20: necesidades y gustos como % de los ingresos; ahorro = lo que queda.
 - Importar un backup **reemplaza** todos los datos (previa vista previa y confirmación).
+- Transferir entre cuentas de distinta moneda convierte con la cotización del movimiento (sirve para vender dólares).
+- La primera vez que se abre la app en un navegador sin movimientos, carga sola los datos de ejemplo
+  (mes anterior completo + mes actual hasta hoy) y muestra un cartel para borrarlos. Clave `ejemplo_ofrecido` en `localStorage`.
 
 ## Formato e idioma
 
