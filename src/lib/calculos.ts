@@ -84,9 +84,11 @@ export function gastosPorGrupo(movs: Movimiento[], mes: string, categorias: Cate
  * Saldo actual de una cuenta, en centavos de su moneda:
  * saldo inicial + ingresos − gastos − lo que salió por transferencias/compras + lo que entró.
  */
-export function saldoDeCuenta(cuenta: Cuenta, movs: Movimiento[]): number {
+export function saldoDeCuenta(cuenta: Cuenta, movs: Movimiento[], hasta?: string): number {
   let saldo = cuenta.saldo_inicial
   for (const m of movs) {
+    // Con "hasta" (normalmente hoy) las cuotas y otros movimientos a futuro todavía no mueven el saldo.
+    if (hasta && m.fecha > hasta) continue
     if (m.cuenta_id === cuenta.id) {
       saldo += m.tipo === 'ingreso' ? m.monto_centavos : -m.monto_centavos
     }
@@ -98,10 +100,10 @@ export function saldoDeCuenta(cuenta: Cuenta, movs: Movimiento[]): number {
 }
 
 /** Suma de saldos de las cuentas (no archivadas) de una moneda. */
-export function saldoTotal(cuentas: Cuenta[], movs: Movimiento[], moneda: Moneda): number {
+export function saldoTotal(cuentas: Cuenta[], movs: Movimiento[], moneda: Moneda, hasta?: string): number {
   return cuentas
     .filter((c) => c.moneda === moneda && !c.archivada)
-    .reduce((s, c) => s + saldoDeCuenta(c, movs), 0)
+    .reduce((s, c) => s + saldoDeCuenta(c, movs, hasta), 0)
 }
 
 /** Variación porcentual contra el mes anterior; null si no hay base para comparar. */

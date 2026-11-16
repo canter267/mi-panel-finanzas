@@ -28,6 +28,11 @@ export class BaseFinanzas extends Dexie {
       // orden 3.5: queda después de Mercado Pago y antes de Dólares.
       if (!yaEsta) await cuentas.add({ ...CUENTA_PEDIDOSYA, orden: 3.5 })
     })
+    // v3 (Fase 2): índices para buscar movimientos de un gasto fijo y la alcancía de una cuenta. No toca datos.
+    this.version(3).stores({
+      movimientos: '++id, fecha, tipo, cuenta_id, categoria_id, compra_id, recurrente_id',
+      alcancias: '++id, cuenta_id',
+    })
     // Solo corre la primera vez que se crea la base en este navegador.
     this.on('populate', (tx) => {
       tx.table('cuentas').bulkAdd(CUENTAS_INICIALES)
