@@ -13,15 +13,27 @@ import Ajustes from './pantallas/Ajustes'
 import Cuentas from './pantallas/Cuentas'
 import Movimientos from './pantallas/Movimientos'
 import Panel from './pantallas/Panel'
+import Plan from './pantallas/Plan'
+import { generarRecurrentes } from './db/recurrentes'
+import { avisar, escucharAvisos, type Aviso } from './lib/avisos'
+import { formatearMonto } from './lib/dinero'
+
+const TONO_AVISO: Record<NonNullable<Aviso['tono']>, string> = {
+  info: 'bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900',
+  alerta: 'bg-amber-500 text-slate-950',
+  peligro: 'bg-red-600 text-white',
+}
 
 const SECCIONES = [
   { ruta: '/', nombre: 'Panel', icono: '📊' },
   { ruta: '/movimientos', nombre: 'Movimientos', icono: '🧾' },
+  { ruta: '/plan', nombre: 'Plan', icono: '🎯' },
   { ruta: '/cuentas', nombre: 'Cuentas', icono: '👛' },
   { ruta: '/ajustes', nombre: 'Ajustes', icono: '⚙️' },
 ]
 
 const CLAVE_PRIMERA_VEZ = 'ejemplo_ofrecido'
+let yaArranco = false
 
 export default function App() {
   const [cargando, setCargando] = useState(false)
@@ -32,9 +44,41 @@ export default function App() {
   const casa = casaPreferida()
   const cot = elegirCotizacion(cotizaciones, casa, hoyISO())
 
+  const [avisos, setAvisos] = useState<(Aviso & { id: number })[]>([])
+  const cerrarAviso = (id: number) => setAvisos((lista) => lista.filter((a) => a.id !== id))
+
+  useEffect(
+    () =>
+      escucharAvisos((aviso) => {
+        const id = Date.now() + Math.random()
+        setAvisos((lista) => [...lista, { ...aviso, id }])
+        // Los que traen un botón se quedan hasta que los toques; el resto se va solo.
+        if (!aviso.accion) setTimeout(() => cerrarAviso(id), 8000)
+      }),
+    [],
+  )
+
   useEffect(() => {
-    // Trae la cotización del día al abrir (si ya está guardada, no sale a internet).
-    cotizacionPara(hoyISO()).catch(() => {})
+    // En desarrollo React monta dos veces: esto tiene que correr una sola vez por carga de página.
+    if (yaArranco) return
+    yaArranco = true
+
+    // Trae la cotización del día al abrir (si ya está guardada, no sale a internet)
+    // y después carga los gastos fijos que hayan vencido.
+    cotizacionPara(hoyISO())
+      .catch(() => {})
+      .then(generarRecurrentes)
+      .then((creados) => {
+        if (creados.length === 0) return
+        const detalle = creados
+          .slice(0, 3)
+          .map((m) => `${m.nota} (${formatearMonto(m.monto_centavos, m.moneda)})`)
+          .join(', ')
+        avisar(
+          `Cargué ${creados.length === 1 ? '1 gasto fijo' : `${creados.length} gastos fijos`}: ${detalle}${creados.length > 3 ? '…' : ''}`,
+        )
+      })
+      .catch(() => {})
 
     // La primera vez que se abre la app en este navegador, carga un mes de ejemplo para tener algo que mirar.
     if (!localStorage.getItem(CLAVE_PRIMERA_VEZ)) {
@@ -78,6 +122,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Panel />} />
           <Route path="/movimientos" element={<Movimientos />} />
+          <Route path="/plan" element={<Plan />} />
           <Route path="/cuentas" element={<Cuentas />} />
           <Route path="/ajustes" element={<Ajustes />} />
           <Route path="*" element={<Panel />} />
@@ -112,6 +157,34 @@ export default function App() {
           ))}
         </ul>
       </nav>
+
+      {avisos.length > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-36 z-[60] mx-auto flex max-w-xl flex-col gap-2 px-4" aria-live="polite">
+          {avisos.map((a) => (
+            <div
+              key={a.id}
+              role="status"
+              className={`pointer-events-auto flex items-center gap-3 rounded-2xl px-4 py-3 text-sm shadow-lg ${TONO_AVISO[a.tono ?? 'info']}`}
+            >
+              <span className="flex-1">{a.texto}</span>
+              {a.accion && (
+                <button
+                  className="cursor-pointer font-bold underline"
+                  onClick={() => {
+                    a.accion!.hacer()
+                    cerrarAviso(a.id)
+                  }}
+                >
+                  {a.accion.nombre}
+                </button>
+              )}
+              <button aria-label="Cerrar aviso" className="cursor-pointer text-lg leading-none opacity-70" onClick={() => cerrarAviso(a.id)}>
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {cargando && <FormMovimiento onCerrar={() => setCargando(false)} />}
       {confirmarEjemplo && (
