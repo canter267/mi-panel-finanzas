@@ -26,6 +26,18 @@ export default function Ajustes() {
   const [mensaje, setMensaje] = useState('')
   const [pendiente, setPendiente] = useState<Backup | null>(null)
   const [confirmarEjemplo, setConfirmarEjemplo] = useState(false)
+  const cantidadMovimientos = useLiveQuery(() => db.movimientos.count(), [], 0)
+  const [confirmarTodo, setConfirmarTodo] = useState(false)
+  const [textoBorrar, setTextoBorrar] = useState('')
+
+  async function borrarTodosLosMovimientos() {
+    const n = await db.movimientos.count()
+    await db.movimientos.clear()
+    setConfirmarTodo(false)
+    setTextoBorrar('')
+    setMensajeBorrado(`Se borraron ${n} movimientos. Las cuentas volvieron a su saldo inicial.`)
+  }
+  const [mensajeBorrado, setMensajeBorrado] = useState('')
   const archivo = useRef<HTMLInputElement>(null)
 
   async function actualizar() {
@@ -189,6 +201,69 @@ export default function Ajustes() {
           </button>
         )}
       </section>
+
+      <section className="tarjeta space-y-3 border border-red-200 dark:border-red-900">
+        <h2 className="text-lg font-bold">Borrar todos los movimientos</h2>
+        <p className="text-sm text-slate-500">
+          Borra todos los gastos, ingresos, transferencias y compras de dólares ({cantidadMovimientos} en total). Las cuentas, las
+          categorías y las cotizaciones guardadas quedan. No se puede deshacer: exportá un backup antes.
+        </p>
+        <button className="boton-peligro w-full" disabled={cantidadMovimientos === 0} onClick={() => setConfirmarTodo(true)}>
+          Borrar todos los movimientos
+        </button>
+        {mensajeBorrado && <p role="status" className="text-sm text-slate-600 dark:text-slate-300">{mensajeBorrado}</p>}
+      </section>
+
+      {confirmarTodo && (
+        <Modal
+          titulo="¿Borrar todos los movimientos?"
+          onCerrar={() => {
+            setConfirmarTodo(false)
+            setTextoBorrar('')
+          }}
+        >
+          <div className="space-y-4">
+            <p className="text-sm">
+              Vas a borrar <strong>{cantidadMovimientos} movimientos</strong>, de todos los meses. Las cuentas vuelven a su saldo
+              inicial. <strong>No se puede deshacer.</strong>
+            </p>
+            <button className="boton-secundario w-full" onClick={exportarJson}>
+              Exportar backup antes
+            </button>
+            <div>
+              <label className="etiqueta" htmlFor="confirmar-borrado">
+                Para confirmar, escribí BORRAR
+              </label>
+              <input
+                id="confirmar-borrado"
+                className="campo"
+                autoComplete="off"
+                autoCapitalize="characters"
+                value={textoBorrar}
+                onChange={(e) => setTextoBorrar(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                className="boton-secundario flex-1"
+                onClick={() => {
+                  setConfirmarTodo(false)
+                  setTextoBorrar('')
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="boton-peligro flex-1"
+                disabled={textoBorrar.trim().toUpperCase() !== 'BORRAR'}
+                onClick={borrarTodosLosMovimientos}
+              >
+                Borrar todo
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {resumen && (
         <Modal titulo="Vista previa del backup" onCerrar={() => setPendiente(null)}>
